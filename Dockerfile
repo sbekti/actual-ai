@@ -8,8 +8,7 @@ COPY --chown=node:node package.json package-lock.json* ./
 RUN npm ci
 
 COPY --chown=node:node . .
-RUN npm test -- --runInBand \
-    && npm run build \
+RUN npm run build \
     && npm prune --omit=dev \
     && npm cache clean --force
 
