@@ -74,6 +74,7 @@ services:
     environment:
       ACTUAL_SERVER_URL: http://actual_server:5006
       ACTUAL_PASSWORD: your_actual_password
+      # ACTUAL_SESSION_TOKEN: your_actual_session_token # Use instead of ACTUAL_PASSWORD for OIDC
       ACTUAL_BUDGET_ID: your_actual_budget_sync_id # This is the ID from Settings → Show advanced settings → Sync ID
       CLASSIFICATION_SCHEDULE_CRON: 0 */4 * * * # How often to run classification.
       LLM_PROVIDER: openai # Can be "openai", "openrouter", "anthropic", "google-generative-ai", "ollama" or "groq"

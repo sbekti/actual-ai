@@ -23,6 +23,8 @@ class ActualApiService implements ActualApiServiceI {
 
   private readonly password: string;
 
+  private readonly sessionToken: string;
+
   private readonly budgetId: string;
 
   private readonly e2ePassword: string;
@@ -39,6 +41,7 @@ class ActualApiService implements ActualApiServiceI {
     dataDir: string,
     serverURL: string,
     password: string,
+    sessionToken: string,
     budgetId: string,
     e2ePassword: string,
     isDryRun: boolean,
@@ -48,6 +51,7 @@ class ActualApiService implements ActualApiServiceI {
     this.dataDir = dataDir;
     this.serverURL = serverURL;
     this.password = password;
+    this.sessionToken = sessionToken;
     this.budgetId = budgetId;
     this.e2ePassword = e2ePassword;
     this.isDryRun = isDryRun;
@@ -117,10 +121,14 @@ class ActualApiService implements ActualApiServiceI {
   public async initializeApi() {
     this.acquireDataDirLock();
 
+    const authentication = this.sessionToken
+      ? { sessionToken: this.sessionToken }
+      : { password: this.password };
+
     await this.actualApiClient.init({
       dataDir: this.dataDir,
       serverURL: this.serverURL,
-      password: this.password,
+      ...authentication,
     });
 
     try {
@@ -149,7 +157,7 @@ class ActualApiService implements ActualApiServiceI {
       throw new Error(`Budget download failed. Verify that:
 1. Budget ID "${this.budgetId}" is correct
 2. Server URL "${this.serverURL}" is reachable
-3. Password is correct
+3. Password or session token is correct
 4. E2E password (if used) is valid`);
     }
   }

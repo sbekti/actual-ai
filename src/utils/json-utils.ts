@@ -64,6 +64,9 @@ function parseLlmResponse(text: string): UnifiedResponse {
         newCategory: parsed.newCategory,
       };
     }
+    if (parsed.type === 'unknown') {
+      return { type: 'unknown' };
+    }
 
     // If the response doesn't match expected format but has a categoryId,
     // default to treating it as an existing category

@@ -37,4 +37,8 @@ describe('parseLlmResponse', () => {
     expect(result.type).toBe('new');
     expect(result.newCategory).toEqual({ name: 'Pets', groupName: 'Home', groupIsNew: true });
   });
+
+  it('parses an explicit unknown response', () => {
+    expect(parseLlmResponse('{"type": "unknown"}')).toEqual({ type: 'unknown' });
+  });
 });

@@ -37,6 +37,7 @@ import {
   promptTemplate,
   requestsPerMinuteOverride,
   serverURL,
+  sessionToken,
   tokensPerMinuteOverride,
   valueSerpApiKey,
 } from './config';
@@ -51,6 +52,7 @@ import TagService from './transaction/tag-service';
 import RuleMatchStrategy from './transaction/processing-strategy/rule-match-strategy';
 import ExistingCategoryStrategy from './transaction/processing-strategy/existing-category-strategy';
 import NewCategoryStrategy from './transaction/processing-strategy/new-category-strategy';
+import UnknownCategoryStrategy from './transaction/processing-strategy/unknown-category-strategy';
 import CategorySuggester from './transaction/category-suggester';
 import BatchTransactionProcessor from './transaction/batch-transaction-processor';
 import TransactionProcessor from './transaction/transaction-processor';
@@ -96,6 +98,7 @@ const actualApiService = new ActualApiService(
   dataDir,
   serverURL,
   password,
+  sessionToken,
   budgetId,
   e2ePassword,
   isDryRun,
@@ -133,13 +136,14 @@ const categorySuggester = new CategorySuggester(
 );
 
 const newCategoryStrategy = new NewCategoryStrategy();
+const unknownCategoryStrategy = new UnknownCategoryStrategy(actualApiService, tagService);
 
 const transactionProcessor = new TransactionProcessor(
   actualApiService,
   llmService,
   promptGenerator,
   tagService,
-  [ruleMatchStrategy, existingCategoryStrategy, newCategoryStrategy],
+  [ruleMatchStrategy, existingCategoryStrategy, newCategoryStrategy, unknownCategoryStrategy],
 );
 
 const batchTransactionProcessor = new BatchTransactionProcessor(

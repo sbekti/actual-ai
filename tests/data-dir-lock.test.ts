@@ -8,6 +8,55 @@ function makeTmpDir(): string {
 }
 
 describe('ActualApiService dataDir lock', () => {
+  test.each([
+    {
+      name: 'session token',
+      password: '',
+      sessionToken: 'session-token',
+      expectedAuthentication: { sessionToken: 'session-token' },
+    },
+    {
+      name: 'password fallback',
+      password: 'pw',
+      sessionToken: '',
+      expectedAuthentication: { password: 'pw' },
+    },
+  ])('initializes with $name authentication', async ({
+    password,
+    sessionToken,
+    expectedAuthentication,
+  }) => {
+    const dataDir = makeTmpDir();
+    const init = jest.fn(async () => Promise.resolve());
+    const asyncNoop = jest.fn(async () => Promise.resolve());
+    const client = {
+      init,
+      downloadBudget: asyncNoop,
+      shutdown: asyncNoop,
+    } as unknown as typeof import('@actual-app/api');
+    const service = new ActualApiService(
+      client,
+      fs,
+      dataDir,
+      'http://example.com',
+      password,
+      sessionToken,
+      'budget',
+      '',
+      true,
+    );
+
+    await service.initializeApi();
+
+    expect(init).toHaveBeenCalledWith({
+      dataDir,
+      serverURL: 'http://example.com',
+      ...expectedAuthentication,
+    });
+
+    await service.shutdownApi();
+  });
+
   test('prevents concurrent runs from sharing the same dataDir', async () => {
     const dataDir = makeTmpDir();
 
@@ -37,6 +86,7 @@ describe('ActualApiService dataDir lock', () => {
       dataDir,
       'http://example.com',
       'pw',
+      '',
       'budget',
       '',
       true,
@@ -47,6 +97,7 @@ describe('ActualApiService dataDir lock', () => {
       dataDir,
       'http://example.com',
       'pw',
+      '',
       'budget',
       '',
       true,

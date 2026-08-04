@@ -442,6 +442,37 @@ describe('ActualAiService', () => {
     expect(inMemoryApiService.getWasBankSyncRan()).toBe(true);
   });
 
+  it('propagates initialization failures', async () => {
+    const failure = new Error('authentication failed');
+    const initializeSpy = jest.spyOn(inMemoryApiService, 'initializeApi')
+      .mockRejectedValueOnce(failure);
+    sut = new ActualAiService(
+      transactionService,
+      inMemoryApiService,
+      notesMigrator,
+    );
+
+    await expect(sut.classify()).rejects.toBe(failure);
+    initializeSpy.mockRestore();
+  });
+
+  it('shuts down and propagates classification failures', async () => {
+    const failure = new Error('classification failed');
+    const processSpy = jest.spyOn(transactionService, 'processTransactions')
+      .mockRejectedValueOnce(failure);
+    const shutdownSpy = jest.spyOn(inMemoryApiService, 'shutdownApi');
+    sut = new ActualAiService(
+      transactionService,
+      inMemoryApiService,
+      notesMigrator,
+    );
+
+    await expect(sut.classify()).rejects.toBe(failure);
+    expect(shutdownSpy).toHaveBeenCalledTimes(1);
+    processSpy.mockRestore();
+    shutdownSpy.mockRestore();
+  });
+
   // Add a new test for when rerunMissedTransactions is true
   it('It should process transaction with missed tag when rerunMissedTransactions is true', async () => {
     // Arrange
