@@ -1,20 +1,28 @@
+FROM node:22.21-alpine3.22 AS build
+
+RUN apk add --no-cache python3 make g++
+
+WORKDIR /opt/node_app/app
+
+COPY --chown=node:node package.json package-lock.json* ./
+RUN npm ci
+
+COPY --chown=node:node . .
+RUN npm test -- --runInBand \
+    && npm run build \
+    && npm prune --omit=dev \
+    && npm cache clean --force
+
 FROM node:22.21-alpine3.22
 
-ARG NODE_ENV=production
-ENV NODE_ENV=$NODE_ENV
-
-# Install build dependencies for native modules
-RUN apk add --no-cache python3 make g++
+ENV NODE_ENV=production
 
 USER node
 
-WORKDIR /opt/node_app
-
-COPY --chown=node:node package.json package-lock.json* ./
-RUN npm ci && npm cache clean --force
-ENV PATH=/opt/node_app/node_modules/.bin:$PATH
-
 WORKDIR /opt/node_app/app
-COPY --chown=node:node . .
-RUN npm run build
-CMD [ "npm", "run", "prod" ]
+
+COPY --from=build --chown=node:node /opt/node_app/app/node_modules ./node_modules
+COPY --from=build --chown=node:node /opt/node_app/app/dist ./dist
+COPY --from=build --chown=node:node /opt/node_app/app/src/templates ./src/templates
+
+CMD ["node", "dist/app.js"]
