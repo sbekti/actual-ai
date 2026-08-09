@@ -37,6 +37,7 @@ import {
   promptTemplate,
   requestsPerMinuteOverride,
   serverURL,
+  sessionToken,
   tokensPerMinuteOverride,
   valueSerpApiKey,
 } from './config';
@@ -96,6 +97,7 @@ const actualApiService = new ActualApiService(
   dataDir,
   serverURL,
   password,
+  sessionToken,
   budgetId,
   e2ePassword,
   isDryRun,
