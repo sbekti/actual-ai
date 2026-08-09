@@ -5,6 +5,7 @@ on:
       - master
 jobs:
   docker:
+    if: github.repository == 'sakowicz/actual-ai'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
