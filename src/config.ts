@@ -99,7 +99,7 @@ function registerStandardFeatures() {
 
   features.dryRun = {
     enabled: enabledFeatures.includes('dryRun'),
-    defaultValue: true,
+    defaultValue: false,
     description: 'Run in dry mode without actually making changes',
   };
 

@@ -1,16 +1,9 @@
 # 🤖 Actual AI
 
-<p>
-    <a href="https://github.com/sakowicz/actual-ai">
-        <img alt="GitHub Release" src="https://img.shields.io/github/v/release/sakowicz/actual-ai?label=GitHub">
-    </a>
-    <a href="https://hub.docker.com/r/sakowicz/actual-ai">
-        <img alt="Docker Image Version" src="https://img.shields.io/docker/v/sakowicz/actual-ai?label=Docker%20Hub">
-    </a>
-    <a href="https://codecov.io/github/sakowicz/actual-ai" >
-        <img alt="Test Coverage" src="https://codecov.io/github/sakowicz/actual-ai/graph/badge.svg?token=7ZLJUN61QE"/>
-    </a>
-</p>
+This is `sbekti`'s deployment fork of
+[`sakowicz/actual-ai`](https://github.com/sakowicz/actual-ai). It adds Actual
+session-token authentication for OIDC deployments and publishes tagged
+multi-architecture images to `ghcr.io/sbekti/actual-ai`.
 
 This is a project that allows you to categorize uncategorized transactions
 for [Actual Budget](https://actualbudget.org/)
@@ -66,7 +59,7 @@ services:
     restart: unless-stopped
 
   actual-ai:
-    image: docker.io/sakowicz/actual-ai:latest
+    image: ghcr.io/sbekti/actual-ai:latest
     restart: unless-stopped
     depends_on:
       actual_server:
@@ -78,11 +71,11 @@ services:
       ACTUAL_BUDGET_ID: your_actual_budget_sync_id # This is the ID from Settings → Show advanced settings → Sync ID
       CLASSIFICATION_SCHEDULE_CRON: 0 */4 * * * # How often to run classification.
       LLM_PROVIDER: openai # Can be "openai", "openrouter", "anthropic", "google-generative-ai", "ollama" or "groq"
-      FEATURES: '["classifyOnStartup", "syncAccountsBeforeClassify", "freeWebSearch", "suggestNewCategories"]'
+      FEATURES: '["classifyOnStartup", "syncAccountsBeforeClassify", "freeWebSearch", "suggestNewCategories", "dryRun"]'
 #      VALUESERP_API_KEY: your_valueserp_api_key # API key for ValueSerp, required if webSearch tool is enabled
 #      OPENAI_API_KEY:  # optional. required if you want to use the OpenAI API
-#      OPENAI_MODEL:  # optional. required if you want to use a specific model, default is "gpt-5-mini"
-#      OPENAI_BASE_URL:  # optional. required if you don't want to use the OpenAI API but OpenAI compatible API, ex: "http://ollama:11424/v1
+#      OPENAI_MODEL:  # optional. required if you want to use a specific model, default is "gpt-4.1-mini"
+#      OPENAI_BASE_URL:  # optional. required for an OpenAI-compatible API, e.g. "http://ollama:11434/v1"
 #      OPENROUTER_API_KEY:  # optional. required if you want to use OpenRouter
 #      OPENROUTER_MODEL:  # optional. default is "deepseek/deepseek-v3.2"
 #      OPENROUTER_BASE_URL:  # optional. default: "https://openrouter.ai/api/v1"
@@ -92,14 +85,14 @@ services:
 #      OPENROUTER_ENABLE_TOOL_CALLING:  # optional. "true" to allow model tool-calling on openrouter, default: false
 #      ANTHROPIC_API_KEY:  # optional. required if you want to use the Anthropic API
 #      ANTHROPIC_MODEL:  # optional. required if you want to use a specific model, default is "claude-3-5-sonnet-latest"
-#      ANTHROPIC_BASE_URL:  # optional. default: "https://api.anthropic.com/v1
+#      ANTHROPIC_BASE_URL:  # optional. default: "https://api.anthropic.com/v1"
 #      GOOGLE_GENERATIVE_AI_API_KEY:  # optional. required if you want to use the Google Generative AI API
 #      GOOGLE_GENERATIVE_AI_MODEL:  # optional. required if you want to use a specific model, default is "gemini-1.5-flash"
-#      GOOGLE_GENERATIVE_AI_BASE_URL:  # optional. default: "https://generativelanguage.googleapis.com"
-#      OLLAMA_MODEL=llama3.1 optional. required if you want to use an Ollama specific model, default is "phi3.5"
-#      OLLAMA_BASE_URL=http://localhost:11434/api # optional. required for ollama provider
+#      GOOGLE_GENERATIVE_AI_BASE_URL:  # optional. default: "https://generativelanguage.googleapis.com/v1beta"
+#      OLLAMA_MODEL:  # optional. required for a specific Ollama model, default is "llama3.1"
+#      OLLAMA_BASE_URL: http://localhost:11434/api # optional. required for the Ollama provider
 #      GROQ_API_KEY:  # optional. required if you want to use the Groq API
-#      GROQ_MODEL:  # optional. required if you want to use a specific model, default is "mixtral-8x7b-32768"
+#      GROQ_MODEL:  # optional. required if you want to use a specific model, default is "llama-3.3-70b-versatile"
 #      GROQ_BASE_URL:  # optional. default: "https://api.groq.com/openai/v1"
 #      ACTUAL_E2E_PASSWORD:  # optional. required if you have E2E encryption
 #      NODE_TLS_REJECT_UNAUTHORIZED: 0 # optional. required if you have trouble connecting to Actual server 
@@ -114,10 +107,10 @@ You can configure features using `FEATURES` (JSON array) or `ENABLED_FEATURES` (
 The `FEATURES` environment variable accepts a JSON array of feature names to enable:
 
 ```
-FEATURES='["freeWebSearch", "suggestNewCategories", "classifyOnStartup", "syncAccountsBeforeClassify"]'
+FEATURES='["freeWebSearch", "suggestNewCategories", "classifyOnStartup", "syncAccountsBeforeClassify", "dryRun"]'
 
 # Equivalent:
-ENABLED_FEATURES='freeWebSearch,suggestNewCategories,classifyOnStartup,syncAccountsBeforeClassify'
+ENABLED_FEATURES='freeWebSearch,suggestNewCategories,classifyOnStartup,syncAccountsBeforeClassify,dryRun'
 ```
 
 Available features:
@@ -126,7 +119,7 @@ Available features:
 - `suggestNewCategories` - Allow suggesting new categories for transactions
 - `classifyOnStartup` - Run classification when the application starts
 - `syncAccountsBeforeClassify` - Sync accounts before running classification
-- `dryRun` - Run in dry run mode (enabled by default)
+- `dryRun` - Prevent transaction and category writes; it must be explicitly enabled
 - `rerunMissedTransactions` - Re-process transactions previously marked as unclassified
 - `disableRateLimiter` - Disable Rate Limiter
 
@@ -217,14 +210,18 @@ The search results are included in the prompts sent to the LLM, helping it make 
 
 ## Dry Run Mode
 
-The `dryRun` feature is enabled by default. In this mode:
+The `dryRun` feature is opt-in. Include it in `FEATURES` or `ENABLED_FEATURES`
+to prevent writes. The examples above enable it deliberately; without it,
+classification can modify transactions and categories.
+
+In dry-run mode:
 - No transactions will be modified
 - No categories will be created
 - All proposed changes will be logged to console
 - System will show what would happen with real execution
 
 To perform actual changes:
-1. Remove `dryRun` from your FEATURES array
+1. Remove `dryRun` from your `FEATURES` or `ENABLED_FEATURES` value
 2. Ensure `suggestNewCategories` is enabled if you want new category creation
 3. Run the classification process
 

@@ -29,6 +29,28 @@ describe('config feature env parsing', () => {
     expect(config.isFeatureEnabled('disableRateLimiter')).toBe(true);
   });
 
+  test('does not enable dry run implicitly', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      FEATURES: '[]',
+      ENABLED_FEATURES: '',
+    };
+
+    const config = await import('../src/config');
+    expect(config.isFeatureEnabled('dryRun')).toBe(false);
+  });
+
+  test('enables dry run when explicitly listed', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      FEATURES: '["dryRun"]',
+      ENABLED_FEATURES: '',
+    };
+
+    const config = await import('../src/config');
+    expect(config.isFeatureEnabled('dryRun')).toBe(true);
+  });
+
   test('parses LLM timeout and OpenRouter tool-calling env values', async () => {
     process.env = {
       ...ORIGINAL_ENV,
